@@ -1,0 +1,76 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"io"
+	"log"
+	"strings"
+
+	"afsfs/pkg/afs"
+)
+
+func main() {
+	servers := flag.String("servers", "localhost:50051,localhost:50052,localhost:50053", "servers")
+	cacheDir := flag.String("cacheDir", "tmp/afs-cache", "cache dir")
+	flag.Parse()
+
+	client, err := afs.NewClient(strings.Split(*servers, ","), *cacheDir)
+	if err != nil {
+		log.Fatalf("connect failed: %v", err)
+	}
+	defer client.CloseConn()
+
+	// 1. Open — opens remote file, fetches to local cache
+	fmt.Println("OPEN")
+	handle, err := client.Open("input_dataset_001.txt", false)
+	if err != nil {
+		log.Fatalf("Open failed: %v", err)
+	}
+	fmt.Printf("Opened file, handle = %d\n", handle)
+
+	// 2. Read — reads from local cache (tmp/afs-cache/input_dataset_001.txt)
+	fmt.Println("\nREAD")
+	buf := make([]byte, 4096)
+	var data []byte
+	for {
+		n, err := client.Read(handle, buf)
+		if n > 0 {
+			data = append(data, buf[:n]...)
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Read failed: %v", err)
+		}
+	}
+	fmt.Printf("Read %d bytes:\n%s\n", len(data), string(data))
+
+	// 3. Close (read-only, no flush)
+	fmt.Println("CLOSE (read-only)")
+	client.Close(handle)
+	fmt.Println("Closed. No StoreFile RPC sent (file was not modified)")
+
+	// 4. Create — creates a new file on the server
+	fmt.Println("\nCREATE")
+	wh, err := client.CreateFile("primes.txt")
+	if err != nil {
+		log.Fatalf("CreateFile failed: %v", err)
+	}
+	fmt.Printf("Created primes.txt, handle = %d\n", wh)
+
+	// 5. Write — writes to local cache only (no network)
+	fmt.Println("\n=== WRITE ===")
+	n, _ := client.Write(wh, []byte("2\n3\n5\n7\n11\n13\n"))
+	fmt.Printf("Wrote %d bytes to LOCAL cache only\n", n)
+
+	// 6. Close (dirty — triggers StoreFile RPC to flush to server)
+	fmt.Println("\n=== CLOSE (dirty — flush to server) ===")
+	client.Close(wh)
+	fmt.Println("Closed. StoreFile RPC fired → data sent to server!")
+
+	fmt.Println("\n=== DONE ===")
+	fmt.Println("Check server disk:  cat testdata/output-s1/primes.txt")
+	fmt.Println("Check local cache:  cat /tmp/afs-cache/primes.txt")
+}

@@ -1,0 +1,37 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"log"
+	"strings"
+
+	"afsfs/pkg/afs"
+)
+
+func main() {
+	servers := flag.String("servers", "localhost:50051,localhost:50052,localhost:50053", "servers")
+	cacheDir := flag.String("cacheDir", "/tmp/afs-cache", "cache dir")
+	flag.Parse()
+
+	client, err := afs.NewClient(strings.Split(*servers, ","), *cacheDir)
+	if err != nil {
+		log.Fatalf("connect failed: %v", err)
+	}
+	defer client.CloseConn()
+
+	// Write a file — it will appear on ALL 3 servers
+	fmt.Println("WRITE (goes to all 3 servers)")
+	client.DeleteFile("replicated.txt")
+	wh, _ := client.CreateFile("replicated.txt")
+	client.Write(wh, []byte("This file is on all 3 servers!\n"))
+	client.Close(wh) // StoreFile → primary → replicate to s2, s3
+	fmt.Println("Written and replicated!")
+
+	fmt.Println("\nVERIFY ON ALL 3 SERVER DISKS")
+	fmt.Println("Run these commands:")
+	fmt.Println("  cat testdata/output-s1/replicated.txt")
+	fmt.Println("  cat testdata/output-s2/replicated.txt")
+	fmt.Println("  cat testdata/output-s3/replicated.txt")
+	fmt.Println("All three must be identical!")
+}

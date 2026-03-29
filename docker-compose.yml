@@ -1,0 +1,95 @@
+
+# shared network 
+# all containers can reach each other by service name
+# s2 reaches s1 via "s1:50051" — no IP addresses needed
+networks:
+  afs-network:
+    driver: bridge
+
+services:
+
+  s1:
+    build: .
+    container_name: s1
+    hostname: s1
+    networks:
+      - afs-network
+    ports:
+      - "50051:50051"
+    volumes:
+      - ./testdata/input:/data/input
+      - ./testdata/output-s1:/data/output
+    # restart:no so that `docker compose stop s1` keeps it stopped and
+    # `docker compose run --rm client` does NOT auto-restart it.
+    restart: "no"
+    command: >
+      ./bin/server
+      -id s1
+      -host s1
+      -port 50051
+      -primary=true
+      -inputDir /data/input
+      -outputDir /data/output
+      -peers s2=s2:50052,s3=s3:50053
+
+  s2:
+    build: .
+    container_name: s2
+    hostname: s2
+    networks:
+      - afs-network
+    ports:
+      - "50052:50052"
+    volumes:
+      - ./testdata/input:/data/input
+      - ./testdata/output-s2:/data/output
+    restart: "no"
+    command: >
+      ./bin/server
+      -id s2
+      -host s2
+      -port 50052
+      -primary=false
+      -inputDir /data/input
+      -outputDir /data/output
+      -peers s1=s1:50051,s3=s3:50053
+    depends_on:
+      - s1
+
+  s3:
+    build: .
+    container_name: s3
+    hostname: s3
+    networks:
+      - afs-network
+    ports:
+      - "50053:50053"
+    volumes:
+      - ./testdata/input:/data/input
+      - ./testdata/output-s3:/data/output
+    restart: "no"
+    command: >
+      ./bin/server
+      -id s3
+      -host s3
+      -port 50053
+      -primary=false
+      -inputDir /data/input
+      -outputDir /data/output
+      -peers s1=s1:50051,s2=s2:50052
+    depends_on:
+      - s1
+
+  client:
+    image: golang:1.25-alpine
+    container_name: afs-client
+    networks:
+      - afs-network
+    volumes:
+      - .:/app
+    working_dir: /app
+    restart: "no"
+    # NO depends_on — so `docker compose run --rm client ...` never
+    # auto-starts or restarts s1/s2/s3. The client finds whoever is alive.
+    profiles:
+      - client

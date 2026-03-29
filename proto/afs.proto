@@ -1,0 +1,172 @@
+syntax = "proto3";
+
+package afs;
+
+option go_package = "afsfs/generated/afs";
+
+
+service AFSService {
+  rpc Open (OpenRequest) returns (OpenResponse);
+  rpc FetchFile  (FetchFileRequest)  returns (FetchFileResponse);
+  rpc TestAuth   (TestAuthRequest)   returns (TestAuthResponse);
+  rpc StoreFile  (StoreFileRequest)  returns (StoreFileResponse);
+  rpc CreateFile (CreateFileRequest) returns (CreateFileResponse);
+  rpc DeleteFile (DeleteFileRequest) returns (DeleteFileResponse);
+  rpc CloseFile  (CloseFileRequest)  returns (CloseFileResponse);
+
+  rpc Replicate(ReplicateRequest) returns (ReplicateResponse);
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  rpc GetPrimary(GetPrimaryRequest) returns (GetPrimaryResponse);
+  rpc SyncState(SyncStateRequest) returns (SyncStateResponse);
+  rpc AnnouncePrimary(AnnouncePrimaryRequest) returns (AnnouncePrimaryResponse);
+
+}
+
+
+message OpenRequest {
+  string path  = 1;
+  bool   write = 2;
+  string client_id = 3;
+  int64 req_seq = 4;
+}
+
+message OpenResponse {
+  int64  file_handle_id = 1;
+  string error          = 2;
+}
+
+
+message FetchFileRequest {
+  string path = 1;
+}
+
+message FetchFileResponse {
+  bytes  data    = 1;
+  int64  version = 2;
+  string error   = 3;
+}
+
+
+message TestAuthRequest {
+  string path           = 1;
+  int64  cached_version = 2;
+}
+
+message TestAuthResponse {
+  bool  is_valid = 1;
+  int64 version  = 2;
+}
+
+message StoreFileRequest {
+  string path = 1;
+  bytes  data = 2;
+  string client_id = 3;
+  int64 req_seq = 4;
+}
+
+message StoreFileResponse {
+  int64  version = 1;
+  string error   = 2;
+}
+
+message CreateFileRequest {
+  string path = 1;
+  string client_id = 2;
+  int64 req_seq = 3;
+}
+
+message CreateFileResponse {
+  int64  file_handle_id = 1;
+  string error          = 2;
+}
+
+
+message DeleteFileRequest {
+  string path = 1;
+  string client_id = 2;
+  int64 req_seq = 3;
+}
+
+message DeleteFileResponse {
+  string error = 1;
+}
+
+
+
+message CloseFileRequest {
+  int64 file_handle_id = 1;
+}
+
+message CloseFileResponse {
+  string error = 1;
+}
+
+
+// Replicate primary -> backup
+// send a write operation to backup server
+
+message ReplicateRequest {
+    string operation = 1; // store or delete 
+    string path = 2;// filname
+    bytes data = 3; // file contents. (empty for delete)
+    int64 version = 4; // version after write
+}
+
+message ReplicateResponse {
+    string error = 1;
+}
+
+
+// heartbeat primary -> backup
+// primary send this every second to check 
+// if primary is alive 
+message HeartbeatRequest {
+    string server_id = 1;  // who is sending
+}
+
+message HeartbeatResponse {
+  bool   is_primary = 1; // confirms sender is primary
+  string error      = 2;
+}
+
+// get primary  client -> server
+// client asks any server who the current primary is 
+
+message GetPrimaryRequest {}
+
+
+message GetPrimaryResponse { 
+    string primary_addr = 1; // address of the current primary
+    string error = 2;
+}
+
+// syncState  recovering server -> primary 
+// recovering server asks primary for all  files so it can catch up
+
+message SyncFileEntry {
+  string path    = 1; // filename
+  bytes  data    = 2; // file contents
+  int64  version = 3; // current version
+}
+
+
+message SyncStateRequest {
+  string server_id = 1; // who is recovering
+}
+
+
+message SyncStateResponse  {
+    repeated SyncFileEntry files = 1;
+    string error = 2;
+}
+
+// AnnouncePrimary — winner of election -> all live peers
+// tells every backup who the new primary is
+message AnnouncePrimaryRequest {
+  string primary_addr = 1; // address of the new primary
+  string primary_id   = 2; // id of the new primary
+}
+
+message AnnouncePrimaryResponse {
+  string error = 1;
+}

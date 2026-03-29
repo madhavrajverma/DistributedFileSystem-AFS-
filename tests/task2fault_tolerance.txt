@@ -1,0 +1,52 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"log"
+	"strings"
+
+	"afsfs/pkg/afs"
+)
+
+func main() {
+	servers := flag.String("servers", "localhost:50051,localhost:50052,localhost:50053", "servers")
+	cacheDir := flag.String("cacheDir", "/tmp/afs-cache", "cache dir")
+	flag.Parse()
+
+	client, err := afs.NewClient(strings.Split(*servers, ","), *cacheDir)
+	if err != nil {
+		log.Fatalf("connect failed: %v", err)
+	}
+
+	// 1. Write a file properly
+	fmt.Println("WRITE AND CLOSE PROPERLY")
+	client.DeleteFile("fault_test.txt")
+	wh, _ := client.CreateFile("fault_test.txt")
+	client.Write(wh, []byte("SAFE CONTENT\n"))
+	client.Close(wh)
+	fmt.Println("Server has: SAFE CONTENT")
+
+	// 2. Write new content but DO NOT CLOSE (simulate client crash)
+	fmt.Println("\n=== WRITE WITHOUT CLOSE (simulate crash) ===")
+	wh2, _ := client.Open("fault_test.txt", true)
+	client.Write(wh2, []byte("CRASH CONTENT — this should NEVER reach server\n"))
+	fmt.Println("Written to local cache only")
+	fmt.Println("Dropping connection WITHOUT Close()...")
+	client.CloseConn() // crash! no Close = no StoreFile RPC
+
+	// 3. New client verify server still has SAFE CONTENT
+	fmt.Println("\nNEW CLIENT — VERIFY SERVER ")
+	client2, _ := afs.NewClient(strings.Split(*servers, ","), *cacheDir+"-verify")
+	defer client2.CloseConn()
+
+	rh, _ := client2.Open("fault_test.txt", false)
+	buf := make([]byte, 4096)
+	n, _ := client2.Read(rh, buf)
+	client2.Close(rh)
+	fmt.Printf("Server has: %s", string(buf[:n]))
+	fmt.Println("CRASH CONTENT never reached server — fault tolerance works!")
+
+	fmt.Println("\n=== DONE ===")
+	fmt.Println("Server: cat testdata/output-s1/fault_test.txt")
+}

@@ -1,0 +1,27 @@
+go build -o bin/client ./cmd/client
+
+go build -o bin/server ./cmd/server
+
+
+./bin/server -id s1 -port 50051 -inputDir ./testdata/input -outputDir ./testdata/output
+
+./bin/client -server localhost:50051 -cacheDir ./tmp/afs-cache
+
+protoc --go_out=. --go_opt=paths=source_relative  --go-grpc_out=. --go-grpc_opt=paths=source_relative --proto_path=proto proto/afs.proto
+
+
+
+docker compose down
+docker compose up --build
+
+
+docker compose run client
+
+docker compose ps
+
+
+docker compose logs s1
+
+
+
+go build -o bin/client ./cmd/client && ./bin/client -servers localhost:50051,localhost:50052,localhost:50053 -cacheDir /tmp/afs-cache
