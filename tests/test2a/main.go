@@ -17,13 +17,11 @@ func main() {
 	cacheDir := flag.String("cacheDir", "/tmp/afs-cache", "local cache directory")
 	flag.Parse()
 
-	fmt.Println("═══════════════════════════════════════")
 	fmt.Println("  TASK 2A — Server Crash During Operation")
 	fmt.Println("  Proves: cached reads survive crash;")
-	fmt.Println("          new client auto-connects to new primary")
-	fmt.Println("═══════════════════════════════════════")
+	fmt.Println(" new client auto-connects to new primary")
 
-	// ── Step 1: Open and cache the file while all servers are alive ──────
+	//  Step 1: Open and cache the file while all servers are alive
 	fmt.Println("\n[Step 1] Connect and open file (all servers alive)")
 	client, err := afs.NewClient(strings.Split(*servers, ","), *cacheDir)
 	if err != nil {
@@ -36,8 +34,8 @@ func main() {
 	}
 	fmt.Printf("  PASS ✓  opened handle=%d — file is now in local cache\n", h)
 
-	// ── Step 2: Instruct user to kill s1 (the primary) ──────────────────
-	// ── Step 2: Kill s1 (the primary) programmatically ──────────────────────
+	//  Step 2: Instruct user to kill s1 (the primary)
+	//  Step 2: Kill s1 (the primary) programmatically
 	fmt.Println("\n[Step 2] NOW killing the primary server s1...")
 	if err := killServer(50051); err != nil {
 		fmt.Printf("  Warning: could not kill s1 programmatically: %v\n", err)
@@ -48,7 +46,7 @@ func main() {
 		time.Sleep(4 * time.Second)
 	}
 
-	// ── Step 3: Read from local cache — NO network needed ───────────────
+	//  Step 3: Read from local cache — NO network needed
 	fmt.Println("\n[Step 3] Read file (s1 is dead — reads from LOCAL CACHE)")
 	buf := make([]byte, 4096)
 	var data []byte
@@ -71,7 +69,7 @@ func main() {
 	}
 	client.CloseConn() // drop old connection
 
-	// ── Step 4: New client — must auto-find new primary ─────────────────
+	//  Step 4: New client — must auto-find new primary
 	fmt.Println("\n[Step 4] New client connection → auto-discovers new primary")
 	client2, err := afs.NewClient(strings.Split(*servers, ","), *cacheDir+"-2")
 	if err != nil {

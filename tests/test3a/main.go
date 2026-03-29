@@ -17,12 +17,10 @@ func main() {
 
 	addrs := strings.Split(*servers, ",")
 
-	fmt.Println("═══════════════════════════════════════")
 	fmt.Println("  TASK 3A — Replication")
 	fmt.Println("  Proves: write to primary appears on ALL 3 servers")
-	fmt.Println("═══════════════════════════════════════")
 
-	// ── Step 1: Write a file via the primary ─────────────────────────────
+	//  Step 1: Write a file via the primary
 	fmt.Println("\n[Step 1] Write 'replicated.txt' to the primary")
 	client, err := afs.NewClient(addrs, *cacheDir)
 	if err != nil {
@@ -42,7 +40,7 @@ func main() {
 	}
 	fmt.Println("  PASS ✓  StoreFile sent → primary replicated to s2 and s3")
 
-	// ── Step 2: Read back from each server individually ──────────────────
+	//  Step 2: Read back from each server individually
 	fmt.Println("\n[Step 2] Read 'replicated.txt' directly from each server")
 	allMatch := true
 	for i, addr := range addrs {
@@ -89,9 +87,7 @@ func main() {
 		fmt.Println("  MISMATCH between servers ✗")
 	}
 
-	fmt.Println("\n═══════════════════════════════════════")
 	fmt.Println("  TASK 3A COMPLETE")
-	fmt.Println("═══════════════════════════════════════")
 	fmt.Println("\nAlso verify on disk:")
 	fmt.Println("  cat testdata/output-s1/replicated.txt")
 	fmt.Println("  cat testdata/output-s2/replicated.txt")

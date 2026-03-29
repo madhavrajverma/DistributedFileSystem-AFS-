@@ -46,12 +46,12 @@ client.CloseConn()
 
 ## What's Implemented
 
-| Task | Feature | Points |
-|------|---------|--------|
-| **1A** | Open, Read, Write, Close, Create, Delete over gRPC | 15% |
-| **1B** | Whole-file client-side caching with `TestAuth` version validation | 15% |
-| **2** | At-least-once RPCs, idempotency (clientID + reqSeq dedup), client crash safety | 10% |
-| **3** | Primary-backup replication, heartbeat failure detection, lowest-ID leader election, client failover, server recovery sync | 15% |
+| Task | Feature 
+|------|---------
+| **1A** | Open, Read, Write, Close, Create, Delete over gRPC 
+| **1B** | Whole-file client-side caching with `TestAuth` version validation 
+| **2** | At-least-once RPCs, idempotency (clientID + reqSeq dedup), client crash safety 
+| **3** | Primary-backup replication, heartbeat failure detection, lowest-ID leader election, client failover, server recovery sync
 
 
 
@@ -80,7 +80,7 @@ This system stores large input datasets and output result files across a cluster
 
 All file operations happen via gRPC RPCs defined in `proto/afs.proto`.
 
-#### RPC Catalog
+#### RPC Services
 
 | RPC | Direction | Description |
 |-----|-----------|-------------|
@@ -419,6 +419,8 @@ All three must print: `replication test - this must appear on all 3 servers`
 
 ```bash
 # Kill the primary
+
+#Note : Delete replicated.txt file from all server to see the results of this you can find in testcase/output-s1  , testcase/output-s2 and testcase/output-s3
 docker compose stop s1
 
 # Wait 4 seconds for automatic election
@@ -438,7 +440,7 @@ docker exec s3 cat /data/output/replicated.txt
 ### 6. Demonstrate recovery (Task 3C)
 
 ```bash
-# Bring s1 back as a backup
+# Bring s1 back as a backup you will see the  replcated file sync with noe server 1
 docker compose start s1
 
 # Wait for sync

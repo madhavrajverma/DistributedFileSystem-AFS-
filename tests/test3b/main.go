@@ -19,12 +19,10 @@ func main() {
 
 	addrs := strings.Split(*servers, ",")
 
-	fmt.Println("═══════════════════════════════════════")
 	fmt.Println("  TASK 3B — Primary Failover")
 	fmt.Println("  Proves: write completes on new primary after s1 dies")
-	fmt.Println("═══════════════════════════════════════")
 
-	// ── Step 1: Kill the primary ─────────────────────────────────────────
+	//  Step 1: Kill the primary
 	fmt.Println("\n[Step 1] Killing the primary server (s1) now...")
 	if err := killServer(50051); err != nil {
 		fmt.Printf("  Warning: could not kill s1 programmatically: %v\n", err)
@@ -35,7 +33,7 @@ func main() {
 		time.Sleep(4 * time.Second)
 	}
 
-	// ── Step 2: Connect — client must find new primary automatically ─────
+	//  Step 2: Connect — client must find new primary automatically
 	fmt.Println("\n[Step 2] Connect — client discovers new primary via GetPrimary RPC")
 	client, err := afs.NewClient(addrs, *cacheDir)
 	if err != nil {
@@ -44,7 +42,7 @@ func main() {
 	defer client.CloseConn()
 	fmt.Println("  PASS ✓  connected to new primary (election succeeded)")
 
-	// ── Step 3: Write to new primary ────────────────────────────────────
+	//  Step 3: Write to new primary
 	fmt.Println("\n[Step 3] Write 'failover.txt' to the new primary")
 	payload := "Written AFTER s1 died — failover works!\n"
 	client.DeleteFile("failover.txt")
@@ -58,7 +56,7 @@ func main() {
 	}
 	fmt.Println("  PASS ✓  write succeeded on new primary")
 
-	// ── Step 4: Read back to verify ─────────────────────────────────────
+	//  Step 4: Read back to verify
 	fmt.Println("\n[Step 4] Read back 'failover.txt' to verify")
 	rh, err := client.Open("failover.txt", false)
 	if err != nil {
@@ -83,9 +81,7 @@ func main() {
 		fmt.Printf("  FAIL: got %q\n", string(data))
 	}
 
-	fmt.Println("\n═══════════════════════════════════════")
 	fmt.Println("  TASK 3B COMPLETE")
-	fmt.Println("═══════════════════════════════════════")
 	fmt.Println("\nVerify on disk (s1 will NOT have it — it was dead):")
 	fmt.Println("  cat testdata/output-s2/failover.txt")
 	fmt.Println("  cat testdata/output-s3/failover.txt")

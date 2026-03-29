@@ -23,7 +23,7 @@ func main() {
 	}
 	defer client.CloseConn()
 
-	// ── Test 1B-1: First open → cache MISS → FetchFile must fire ───────
+	// Test 1B-1: First open → cache MISS → FetchFile must fire
 	fmt.Println("\n[Test 1B-1] First open → cache MISS → FetchFile fires")
 	fmt.Println("  Watch server log: you will see 'FetchFile' RPC")
 	h1, err := client.Open("input_dataset_001.txt", false)
@@ -42,7 +42,7 @@ func main() {
 	}
 	client.Close(h1)
 
-	// ── Test 1B-2: Second open → cache HIT → TestAuth fires, no download
+	//  Test 1B-2: Second open → cache HIT → TestAuth fires, no download
 	fmt.Println("\n[Test 1B-2] Second open → cache HIT → TestAuth fires (no download)")
 	fmt.Println("  Watch server log: you will see 'TestAuth' — NOT 'FetchFile'")
 	h2, err := client.Open("input_dataset_001.txt", false)
@@ -54,7 +54,7 @@ func main() {
 	}
 	client.Close(h2)
 
-	// ── Test 1B-3: Write → close → reopen → cache STALE → re-fetch ─────
+	// Test 1B-3: Write → close → reopen → cache STALE → re-fetch
 	fmt.Println("\n[Test 1B-3] Write → close → reopen → cache invalidated → re-fetch")
 
 	// write a file so its version increases
@@ -90,7 +90,5 @@ func main() {
 		}
 	}
 
-	fmt.Println("\n═══════════════════════════════════════")
 	fmt.Println("  TASK 1B COMPLETE")
-	fmt.Println("═══════════════════════════════════════")
 }

@@ -23,7 +23,7 @@ func main() {
 	}
 	defer client.CloseConn()
 
-	// ── Test 1A-1: Open a file → get a handle ──────────────────────────
+	//  Test 1A-1: Open a file → get a handle
 	fmt.Println("\n[Test 1A-1] Open a file → get a handle")
 	h, err := client.Open("input_dataset_001.txt", false)
 	if err != nil {
@@ -32,7 +32,7 @@ func main() {
 		fmt.Printf("  PASS ✓  handle = %d\n", h)
 	}
 
-	// ── Test 1A-2: Read bytes from the open file ────────────────────────
+	//  Test 1A-2: Read bytes from the open file
 	fmt.Println("\n[Test 1A-2] Read bytes from open file")
 	buf := make([]byte, 4096)
 	var content []byte
@@ -57,7 +57,7 @@ func main() {
 	}
 	client.Close(h)
 
-	// ── Test 1A-3: Create a new file ────────────────────────────────────
+	//  Test 1A-3: Create a new file
 	fmt.Println("\n[Test 1A-3] Create a new file")
 	client.DeleteFile("task1a_output.txt") // clean up if exists
 	wh, err := client.CreateFile("task1a_output.txt")
@@ -67,7 +67,7 @@ func main() {
 		fmt.Printf("  PASS ✓  file created, handle = %d\n", wh)
 	}
 
-	// ── Test 1A-4: Write bytes to the new file ──────────────────────────
+	//  Test 1A-4: Write bytes to the new file
 	fmt.Println("\n[Test 1A-4] Write bytes to new file")
 	payload := "Hello from AFS client!\nPart 1A write test.\n"
 	n, err := client.Write(wh, []byte(payload))
@@ -78,7 +78,7 @@ func main() {
 		fmt.Println("  (data held locally until Close)")
 	}
 
-	// ── Test 1A-5: Close → flush to server ──────────────────────────────
+	//  Test 1A-5: Close → flush to server
 	fmt.Println("\n[Test 1A-5] Close file → verify flush to server")
 	if err := client.Close(wh); err != nil {
 		fmt.Printf("  FAIL: Close error: %v\n", err)
@@ -110,9 +110,7 @@ func main() {
 		}
 	}
 
-	fmt.Println("\n═══════════════════════════════════════")
 	fmt.Println("  TASK 1A COMPLETE")
-	fmt.Println("═══════════════════════════════════════")
 	fmt.Println("\nVerify on each server disk:")
 	fmt.Println("  cat testdata/output-s1/task1a_output.txt")
 	fmt.Println("  cat testdata/output-s2/task1a_output.txt")

@@ -19,15 +19,13 @@ func main() {
 
 	addrs := strings.Split(*servers, ",")
 
-	fmt.Println("═══════════════════════════════════════")
 	fmt.Println("  TASK 3C — Recovery and State Sync")
 	fmt.Println("  Proves: dead server syncs all missed files on restart")
-	fmt.Println("═══════════════════════════════════════")
 	fmt.Println()
 	fmt.Println("  Run this IMMEDIATELY AFTER Test 3B.")
 	fmt.Println("  s1 should still be dead. s2 or s3 is the current primary.")
 
-	// ── Step 1: Bring s1 back ────────────────────────────────────────────
+	//  Step 1: Bring s1 back
 	fmt.Println("\n[Step 1] Restarting s1 as a backup (not primary)...")
 	if err := restartS1(); err != nil {
 		fmt.Printf("  Warning: could not restart s1 programmatically: %v\n", err)
@@ -38,7 +36,7 @@ func main() {
 		time.Sleep(5 * time.Second)
 	}
 
-	// ── Step 2: Write a new file — now all 3 should be alive ────────────
+	//  Step 2: Write a new file — now all 3 should be alive
 	fmt.Println("\n[Step 2] Write 'recovery.txt' — all 3 servers should receive it")
 	client, err := afs.NewClient(addrs, *cacheDir)
 	if err != nil {
@@ -58,7 +56,7 @@ func main() {
 	}
 	fmt.Println("  PASS ✓  recovery.txt written and replicated")
 
-	// ── Step 3: Read from each server — verify all 3 have BOTH files ────
+	//  Step 3: Read from each server — verify all 3 have BOTH files
 	fmt.Println("\n[Step 3] Read from each server — must have BOTH recovery.txt AND failover.txt")
 	for i, addr := range addrs {
 		name := fmt.Sprintf("s%d", i+1)
@@ -122,9 +120,7 @@ func main() {
 		fmt.Println()
 	}
 
-	fmt.Println("═══════════════════════════════════════")
 	fmt.Println("  TASK 3C COMPLETE")
-	fmt.Println("═══════════════════════════════════════")
 	fmt.Println("\nVerify manually:")
 	fmt.Println("  cat testdata/output-s1/failover.txt   ← s1 synced this while it was dead")
 	fmt.Println("  cat testdata/output-s1/recovery.txt")
